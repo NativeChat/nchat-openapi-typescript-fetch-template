@@ -6,8 +6,8 @@ export const BASE_PATH = "{{{basePath}}}".replace(/\/+$/, "");
 
 const isBlob = (value: any) => typeof Blob !== 'undefined' && value instanceof Blob;
 
-export class HttpError extends Error{
-    constructor(message:string, public code: number) {
+export class HttpError extends Error {
+    constructor(message: string, public code: number) {
         super(message);
     }
 }
