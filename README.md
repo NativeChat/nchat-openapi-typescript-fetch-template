@@ -1,2 +1,2 @@
 # nchat-openapi-typescript-fetch-template
-Openapi-generator tempalte for typescript-fetch
+Openapi-generator template for typescript-fetch

@@ -6,6 +6,12 @@ export const BASE_PATH = "{{{basePath}}}".replace(/\/+$/, "");
 
 const isBlob = (value: any) => typeof Blob !== 'undefined' && value instanceof Blob;
 
+export class HttpError extends Error {
+    constructor(message: string, public code: number) {
+        super(message);
+    }
+}
+
 /**
  * This is the base class for all generated API classes.
  */
@@ -33,13 +39,17 @@ export class BaseAPI {
         return this.withMiddleware<T>(...middlewares);
     }
 
-    protected async request(context: RequestOpts): Promise<Response> {
+   protected async request(context: RequestOpts): Promise<Response> {
         const { url, init } = this.createFetchParams(context);
         const response = await this.fetchApi(url, init);
         if (response.status >= 200 && response.status < 300) {
             return response;
         }
-        throw response;
+
+        const error = await response.json();
+        this.configuration.logger.error(`Failed request for ${this.sanitizeUrl(url)} with "${error.message}" and status code: ${response.status}`);
+
+        throw new HttpError(error.message, response.status);
     }
 
     private createFetchParams(context: RequestOpts) {
@@ -98,6 +108,12 @@ export class BaseAPI {
         next.middleware = this.middleware.slice();
         return next;
     }
+
+    private sanitizeUrl(url: string) {
+        const parsedUrl = new URL(url);
+
+        return `${parsedUrl.protocol}//${parsedUrl.host}${parsedUrl.pathname}`;
+    }
 };
 
 export class RequiredError extends Error {
@@ -116,6 +132,13 @@ export const COLLECTION_FORMATS = {
 
 export type FetchAPI = {{#typescriptThreePlus}}WindowOrWorkerGlobalScope{{/typescriptThreePlus}}{{^typescriptThreePlus}}GlobalFetch{{/typescriptThreePlus}}['fetch'];
 
+export interface Logger {
+    info(...args: any[]): void;
+    error(...args: any[]): void;
+    debug(...args: any[]): void;
+    warn(...args: any[]): void;
+}
+
 export interface ConfigurationParameters {
     basePath?: string; // override base path
     fetchApi?: FetchAPI; // override for fetch implementation
@@ -127,6 +150,7 @@ export interface ConfigurationParameters {
     accessToken?: string | ((name?: string, scopes?: string[]) => string); // parameter for oauth2 security
     headers?: HTTPHeaders; //header params we want to use on every request
     credentials?: RequestCredentials; //value for the credentials param we want to use on each request
+    logger?: Logger; // external logger
 }
 
 export class Configuration {
@@ -178,6 +202,10 @@ export class Configuration {
 
     get credentials(): RequestCredentials | undefined {
         return this.configuration.credentials;
+    }
+
+    get logger(): Logger {
+        return this.configuration.logger || console;
     }
 }
 
