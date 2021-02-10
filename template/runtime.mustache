@@ -7,7 +7,7 @@ export const BASE_PATH = "{{{basePath}}}".replace(/\/+$/, "");
 const isBlob = (value: any) => typeof Blob !== 'undefined' && value instanceof Blob;
 
 export class HttpError extends Error {
-    constructor(message: string, public code: number) {
+    constructor(message: string, public code: number, public response: Response) {
         super(message);
     }
 }
@@ -49,7 +49,7 @@ export class BaseAPI {
         const error = await response.json();
         this.configuration.logger.error(`Failed request for ${this.sanitizeUrl(url)} with "${error.message}" and status code: ${response.status}`);
 
-        throw new HttpError(error.message, response.status);
+        throw new HttpError(error.message, response.status, response);
     }
 
     private createFetchParams(context: RequestOpts) {
