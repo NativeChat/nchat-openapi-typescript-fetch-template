@@ -1,6 +1,6 @@
 {
   "name": "nchat-openapi-typescript-fetch-template",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Openapi-generator tempalte for typescript-fetch",
   "main": "index.js",
   "scripts": {
