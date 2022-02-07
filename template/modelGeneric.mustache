@@ -1,13 +1,13 @@
 import { exists, mapValues } from '../runtime';
 {{#hasImports}}
+{{#imports}}
 import {
-    {{#imports}}
     {{{.}}},
     {{.}}FromJSON,
     {{.}}FromJSONTyped,
     {{.}}ToJSON,
-    {{/imports}}
-} from './';
+} from './{{.}}';
+{{/imports}}
 
 {{/hasImports}}
 {{#discriminator}}
@@ -39,7 +39,7 @@ export function {{classname}}FromJSONTyped(json: any, ignoreDiscriminator: boole
     }
 {{/discriminator}}
     return {
-        {{#parent}}...{{{parent}}}FromJSONTyped(json, ignoreDiscriminator),{{/parent}}
+        {{#parent}}...{{{.}}}FromJSONTyped(json, ignoreDiscriminator),{{/parent}}
         {{#additionalPropertiesType}}
             ...json,
         {{/additionalPropertiesType}}
@@ -59,7 +59,12 @@ export function {{classname}}FromJSONTyped(json: any, ignoreDiscriminator: boole
         {{/isPrimitiveType}}
         {{^isPrimitiveType}}
         {{#isArray}}
+        {{#uniqueItems}}
+        '{{name}}': {{^required}}!exists(json, '{{baseName}}') ? undefined : {{/required}}({{#isNullable}}json['{{baseName}}'] === null ? null : {{/isNullable}}new Set((json['{{baseName}}'] as Array<any>).map({{#items}}{{datatype}}{{/items}}FromJSON))),
+        {{/uniqueItems}}
+        {{^uniqueItems}}
         '{{name}}': {{^required}}!exists(json, '{{baseName}}') ? undefined : {{/required}}({{#isNullable}}json['{{baseName}}'] === null ? null : {{/isNullable}}(json['{{baseName}}'] as Array<any>).map({{#items}}{{datatype}}{{/items}}FromJSON)),
+        {{/uniqueItems}}
         {{/isArray}}
         {{#isMap}}
         '{{name}}': {{^required}}!exists(json, '{{baseName}}') ? undefined : {{/required}}({{#isNullable}}json['{{baseName}}'] === null ? null : {{/isNullable}}mapValues(json['{{baseName}}'], {{#items}}{{datatype}}{{/items}}FromJSON)),
@@ -92,7 +97,7 @@ export function {{classname}}ToJSON(value?: {{classname}} | null): any {
         return null;
     }
     return {
-        {{#parent}}...{{{parent}}}ToJSON(value),{{/parent}}
+        {{#parent}}...{{{.}}}ToJSON(value),{{/parent}}
         {{#additionalPropertiesType}}
             ...value,
         {{/additionalPropertiesType}}
@@ -103,7 +108,12 @@ export function {{classname}}ToJSON(value?: {{classname}} | null): any {
         {{/isPrimitiveType}}
         {{^isPrimitiveType}}
         {{#isArray}}
+        {{#uniqueItems}}
+        '{{baseName}}': {{^required}}value.{{name}} === undefined ? undefined : {{/required}}({{#isNullable}}value.{{name}} === null ? null : {{/isNullable}}Array.from(value.{{name}} as Set<any>).map({{#items}}{{datatype}}{{/items}}ToJSON)),
+        {{/uniqueItems}}
+        {{^uniqueItems}}
         '{{baseName}}': {{^required}}value.{{name}} === undefined ? undefined : {{/required}}({{#isNullable}}value.{{name}} === null ? null : {{/isNullable}}(value.{{name}} as Array<any>).map({{#items}}{{datatype}}{{/items}}ToJSON)),
+        {{/uniqueItems}}
         {{/isArray}}
         {{#isMap}}
         '{{baseName}}': {{^required}}value.{{name}} === undefined ? undefined : {{/required}}({{#isNullable}}value.{{name}} === null ? null : {{/isNullable}}mapValues(value.{{name}}, {{#items}}{{datatype}}{{/items}}ToJSON)),
@@ -127,4 +137,3 @@ export function {{classname}}ToJSON(value?: {{classname}} | null): any {
     return value;
     {{/hasVars}}
 }
-
