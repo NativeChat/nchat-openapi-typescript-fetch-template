@@ -28,6 +28,8 @@
 {{#npmRepository}}
   "publishConfig": {
     "registry": "{{npmRepository}}"
-  }
-{{/npmRepository}}
+  }{{/npmRepository}}{{#githubRepository}},{{/githubRepository}}
+{{#githubRepository}}
+  "repository": "{{githubRepository}}"
+{{/githubRepository}}
 }
